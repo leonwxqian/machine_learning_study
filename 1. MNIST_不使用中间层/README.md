@@ -3,7 +3,7 @@
 使用Tensorflow 1的语法，因此调用`disable_v2_behavior`强行禁用v2行为。
 
 
-get_batch：取出一个batch。 因为tensorflow.examples.tutorials已经被移动到keras里面，所以这里直接手动用slice来模拟batch。
+get_batch：取出一个batch。 **因为`tensorflow.examples.tutorials`已经被移动到keras里面，所以这里直接手动用slice来模拟batch。**
 
 load_data，使用np.load加载npz文件。mnist.npz是zip格式的，里面带四个文件x_test,x_train，y_test,y_train。也正好对应四个数据集。
 
