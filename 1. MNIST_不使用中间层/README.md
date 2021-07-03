@@ -21,7 +21,9 @@ load_data，使用np.load加载npz文件。mnist.npz是zip格式的，里面带�
 
 使用one_hot可以很好的解决这个需求，(同时交叉熵ylogp也需要y是onehot编码)，因为数字原本的类型就是整数，这里通过onehot转换到depth=10会得到一个长度为10的一维张量，符合我们的需求。
 
-##模型准备##
+
+#模型准备
+
 这次不使用中间层，输入是一个784x1的tensor，每个像素点xi对应一个权重wi，加上偏置项b，然后通过softmax输出10个类的概率。损失函数为交叉熵，这是分类中比较常见的损失函数。
 
 所以实际上是在做：
@@ -30,10 +32,7 @@ load_data，使用np.load加载npz文件。mnist.npz是zip格式的，里面带�
 学习率固定，设为0.5； 轮数300； 批处理大小100。
 
 
-
 #算法实现
-
-
 
 首先使用
 `x = tf.compat.v1.placeholder(tf.float32, shape=[None, 784])`
@@ -58,8 +57,6 @@ load_data，使用np.load加载npz文件。mnist.npz是zip格式的，里面带�
 
 
 #开始训练
-
-
 
 只有在session中才能运行优化步骤train_step。而之后的sess.run(tf.global_variables_initializer())  则是为了初始化里面的所有变量以及分配内存用的。所以无论如何，基本每个工程都是要执行这两句的：
 `sess = tf.InteractiveSession()
@@ -91,8 +88,6 @@ softmax为预测值生成了10个不同的可能性，可能性最高的那个�
 
 
 #结论
-
-
 
 这是我使用纯Tensorflow去编写学习模型的第一个用例，因此整体以简单为主，方便学习各函数的用法。
 
