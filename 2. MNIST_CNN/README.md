@@ -143,9 +143,6 @@ https://www.cnblogs.com/willnote/p/6746668.html
 池化层2  | 2x2        |  2   | ?x 7x7x64
 ```
 
-
-
-
 全连接层1
 -----
 全连接层接收池化层2的输入是?x 7x7x64，因此这里也应该填入7x7x64。至于输出层的大小1024，则纯粹是因为大家都这么写，所以这里也写1024。（难道是因为MNIST有10个可能，取了个2^10凑整？……
@@ -155,9 +152,8 @@ https://www.zhihu.com/question/313021600
 
 > Flatten层  https://blog.csdn.net/qq_28835913/article/details/85335369
 　　截止到Flatten层之前，在网络中流动的数据还是多维的（对于我们的程序就是2维的），经过多次的卷积、池化、Dropout之后，到了这里就可以进入全连接层做最后的处理了。全连接层要求输入的数据必须是一维的，因此，我们必须把输入数据“压扁”成一维后才能进入全连接层，Flatten层的作用即在于此。该层的作用如此纯粹，因此反映到代码上我们看到它不需要任何输入参数。 
-
-在池化和全连接层中间还有一个flatten的操作，实际上就是将数据压成一维的。因为池化层2输出是?x 7x7x64，有n个图片，因此这里将池化层2的输出压缩为 ? x (7*7*64)的。
-在经过relu(flat x w_fc1 + b_fc1)之后，输出的形状是?x 1024。
+  
+在池化和全连接层中间还有一个flatten的操作，实际上就是将数据压成一维的。因为池化层2输出是?x 7x7x64，有n个图片，因此这里将池化层2的输出压缩为 ? x (7*7*64)的。在经过relu(flat x w_fc1 + b_fc1)之后，输出的形状是?x 1024。
 
 ```
 h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -168,8 +164,6 @@ h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, w_fc1) + b_fc1)
 ```
 
-
-
 dropout
 ------
 为了提高准确度，在最终的全连接层前面加入dropout，训练时丢弃50%数据，测试时不丢弃数据。dropout层相对简单，输出大小不变
@@ -178,8 +172,6 @@ dropout
 keep_prob = tf.compat.v1.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 ```
-
-
 
 全连接层2
 -----
@@ -236,13 +228,12 @@ train_step = tf.train.AdamOptimizer(0.001).minimize(cross_entropy)
 ```
 
 
-
-
-
 训练
 ------
 训练部分的代码和第一次的差不多。就不重复写了。使用上述方案训练后，准确度明显优于无连接的版本。但仍然没有达到非常高的地步。 
+
 同时，这次训练已经明显感受到CPU版本的tensorflow运行速度之慢了，而且dropout还加剧了这个慢速的过程。
+
 配置pycharm使用anaconda环境，anaconda中安装tensorflow-gpu后，速度大幅提升。
 
 ```
