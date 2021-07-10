@@ -59,7 +59,7 @@ https://stats.stackexchange.com/questions/272607/cifar-10-cant-get-above-60-accu
 2.使用tf上层API写
 ===
 （2021.7.8） 这里使用了一些tf封装好的层级结构，例如：
-tf.compat.v1.layers.conv2d
+tf.compat.v1.layers.conv2、
 tf.layers.dense
 来替换原始的卷积层和全连接层，整体网络结构和第一节中的一样，顺便测试无dropout的情况，因此这个工程是没有dropout的。 
 
