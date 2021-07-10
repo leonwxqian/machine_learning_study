@@ -33,13 +33,11 @@ def get_batch(image, label, batch_size, now_batch, total_batch):
 y_train = y_train.reshape(y_train.shape[0])
 y_train_1d = tf.cast(y_train, dtype=tf.int32)
 y_train = tf.one_hot(y_train_1d, 10)
-
-# ytest, before shape= (10000, 1) --> (10000)
+ 
 y_test = y_test.reshape(y_test.shape[0])
 y_test_1d = tf.cast(y_test, dtype=tf.int32)
 y_test = tf.one_hot(y_test_1d, 10)
-
-print("ytest, after onehot, shape=", np.shape(y_test))
+ 
 # 使用类似上次的CNN, CIFAR也有10类
 x = tf.compat.v1.placeholder(tf.float32, shape=[None, IMAGE_SIZE])
 y_ = tf.compat.v1.placeholder(tf.float32, shape=[None, 10])
@@ -93,18 +91,9 @@ tf.global_variables_initializer().run()
 
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-# should i use "flatten" instead???
-print(np.shape(x_train))
-# shape of x_train:  (32, 32, 3)
-# we'd like it to be  10000, image_size
+ 
 x_train = x_train.reshape(x_train.shape[0], IMAGE_SIZE)
-x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE)
-print("1")
-# xt = x_test
-# print("xt shape" , np.shape(xt))
-# yt = y_test.eval(session=sess)
-# print("yt shape" , np.shape(yt))  #it requires a [?, 3072] shape
+x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE) 
 
 
 for i in range(EPOCHES):

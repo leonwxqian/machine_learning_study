@@ -33,14 +33,11 @@ def get_batch(image, label, batch_size, now_batch, total_batch):
 y_train = y_train.reshape(y_train.shape[0])
 y_train_1d = tf.cast(y_train, dtype=tf.int32)
 y_train = tf.one_hot(y_train_1d, 10)
-
-# ytest, before shape= (10000, 1) --> (10000)
+ 
 y_test = y_test.reshape(y_test.shape[0])
 y_test_1d = tf.cast(y_test, dtype=tf.int32)
 y_test = tf.one_hot(y_test_1d, 10)
-
-print("ytest, after onehot, shape=", np.shape(y_test))
-# 使用类似上次的CNN, CIFAR也有10类
+ 
 x = tf.compat.v1.placeholder(tf.float32, shape=[None, IMAGE_SIZE])
 y_ = tf.compat.v1.placeholder(tf.float32, shape=[None, 10])
 
@@ -56,26 +53,25 @@ x_image = tf.reshape(x, [-1, 32, 32, 3])
 
 h_conv1 = tf.compat.v1.layers.conv2d(x_image, filters=64, kernel_size=[5, 5], use_bias=True,
                                      kernel_initializer=tf.random_normal_initializer(stddev=0.01),
-                                     bias_initializer=tf.constant_initializer(0.01), activation=tf.nn.relu)
-print(0, np.shape(h_conv1))
-h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME')
-print(1, np.shape(h_pool1))
+                                     bias_initializer=tf.constant_initializer(0.01), activation=tf.nn.relu) 
+h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME') 
 h_conv2 = tf.compat.v1.layers.conv2d(h_pool1, filters=64, kernel_size=[5, 5], use_bias=True,
                                      kernel_initializer=tf.random_normal_initializer(stddev=0.01),
-                                     bias_initializer=tf.constant_initializer(0.01), activation=tf.nn.relu)
-print(2, np.shape(h_conv2))
+                                     bias_initializer=tf.constant_initializer(0.01), activation=tf.nn.relu) 
 h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME')
 h_pool2_flat = tf.reshape(h_pool2, [-1, 5 * 5 * 64])
+
+
 # tf.contrib.layers.stack + fully_connected is replaced by tf.layers.dense
 h_fc1 = tf.layers.dense(inputs=h_pool2_flat, units=5 * 5 * 64, use_bias=True,
                         kernel_initializer=tf.random_normal_initializer(stddev=0.04),
-                        bias_initializer=tf.constant_initializer(0.1), activation=tf.nn.relu)
-print(np.shape(h_fc1))
+                        bias_initializer=tf.constant_initializer(0.1), activation=tf.nn.relu) 
 h_fc2 = tf.layers.dense(inputs=h_fc1, units=5 * 5 * 8, use_bias=True,
                         kernel_initializer=tf.random_normal_initializer(stddev=0.04),
                         bias_initializer=tf.constant_initializer(0.1), activation=tf.nn.relu)
 logits = tf.layers.dense(inputs=h_fc2, units=10, use_bias=False,
                          kernel_initializer=tf.random_normal_initializer(stddev=1 / 192.0), activation=tf.nn.relu)
+						 
 y_conv = tf.nn.softmax(logits)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -89,18 +85,9 @@ tf.global_variables_initializer().run()
 
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-# should i use "flatten" instead???
-print(np.shape(x_train))
-# shape of x_train:  (32, 32, 3)
-# we'd like it to be  10000, image_size
+ 
 x_train = x_train.reshape(x_train.shape[0], IMAGE_SIZE)
-x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE)
-print("1")
-# xt = x_test
-# print("xt shape" , np.shape(xt))
-# yt = y_test.eval(session=sess)
-# print("yt shape" , np.shape(yt))  #it requires a [?, 3072] shape
+x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE) 
 
 for i in range(EPOCHES):
     (x_batch, y_batch) = get_batch(x_train, y_train, 200, i, 50000)
