@@ -30,27 +30,18 @@ Dropout  |       **0.50**         | ?x 1024
 
 下面这个神经网络则是我参考
 https://stats.stackexchange.com/questions/272607/cifar-10-cant-get-above-60-accuracy-keras-with-tensorflow-backend 的答案改成tensorflow语法的，最终其实和上面的差不多，少了dropout层，准确率也在70%左右，和答主说的“Here's an even simpler and much smaller architecture that can get to 70% pretty quickly with the same training regimen (no BatchNormalization or pooling layers)”类似。
-
+`
 类型     | Kernel尺寸  | 步长 | 输出尺寸
-
 ---------+-------------+------+----------
-
 输入层   |                    | ?x 32x32x3
-
 卷积层1  | 5x5x64      |  1   | ?x 32x32x3x64
-
 池化层1  | 3x3         |  2   | ?x 16x16x3x64
-
 卷积层2  | 5x5x64      |  1   | ?x 16x16x3x64
-
 池化层2  | 3x3         |  2   | ?x 8x8x3x64
-
 全连接层1|                    | ?x 4096
-
 全连接层2|                    | ?x 384
-
 全连接层3|      softmax       | ?x 10
-
+`
 仍然使用Adam，固定学习率0.0001，2000 epoch x 200 样本来训练，没有使用衰减是因为这里我测试似乎固定学习率准确率上升更快，原因未知。另外，去除了dropout因此训练速度也提升很快。但结果和上一个基本是一样的，在1300 epoch左右到达65%附近。2000 epoch能到达70%附近，训练速度也越来越慢。
 
 1.1 准确度优化和网络选择的问题
