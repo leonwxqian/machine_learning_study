@@ -7,7 +7,7 @@ AlexNet典型的案例是参加ILSVRC 2012（ImageNet Large Scale Visual Recogni
 AlexNet
 ==========
 AlexNet参赛时使用的网络配置如下：
-
+```
 输入 227x227x3 -> 
 卷积层 11x11, pad = 4, 96 kernels -> 
 最大池化层 3x3, strides = 2 -> 
@@ -20,7 +20,7 @@ AlexNet参赛时使用的网络配置如下：
 全连接层 4096 ->
 全连接层 4096 ->
 softmax  1000
-
+```
 
 中间的pad（0填充边缘）作用是让输入图像不变小，而可以使用更深层的卷积。
 
@@ -30,36 +30,38 @@ softmax  1000
 （2021.7.10）因为数据下载时间有点长，在这个期间内，我先使用tf.keras依葫芦画瓢，照着论文里面的结构做了一个alexnet。比较惨的是代码忘记移出来了，已经被我覆盖掉，不过代码结构和CIFAR-100一样，可以直接看CIFAR-100的代码。
 
 直接应用上述“网络使用”节里面的网络，梯度下降使用Adam（而不是论文中提到的sgd），且不加入Dropout，迭代过程中便出现了过拟合的现象。
+```
 Epoch 20/20
 782/782 [==============================] - 31s 39ms/step - loss: 0.5243 - accuracy: 0.8158 - val_loss: 0.7617 - val_accuracy: 0.7490
-
+```
 在全连接层和softmax中间加入0.25的droupout层后重新训练。过拟合现象消除，测试准确率大约在75%左右。
+```
 Epoch 20/20
 782/782 [==============================] - 31s 40ms/step - loss: 0.5358 - accuracy: 0.8119 - val_loss: 0.7759 - val_accuracy: 0.7523
-
+```
 
 在全连接层和softmax中间加入0.25的dropout层，且使用sgd进行梯度下降，正如论文中提到的：
 
 >我们使用随机梯度下降来训练我们的模型，样本的batch size为128，动量为0.9，权重衰减为0.0005。我们发现少量的权重衰减对于模型的学习是重要的。换句话说，权重衰减不仅仅是一个正则项：它减少了模型的训练误差。
 
-
+```
 opt = keras.optimizers.SGD(momentum=0.9, decay=0.0005, nesterov=False)
-
+```
 多次进行训练，得到结果基本如下：
-
+```
 Epoch 20/20
 782/782 [==============================] - 31s 39ms/step - loss: 0.5828 - accuracy: 0.7954 - val_loss: 0.7238 - val_accuracy: 0.7571
-
+```
 
 最后，和论文一致，在全连接层和softmax中间加入0.50的dropout层，且使用sgd进行梯度下降：
 
-
+```
 Epoch 20/20
 782/782 [==============================] - 32s 41ms/step - loss: 0.5997 - accuracy: 0.7893 - val_loss: 0.7514 - val_accuracy: 0.7490
-
+```
 
 看起来似乎并不高，不过可能是因为原来它的输入图片都很大，所以第一步就使用了11x11的卷积核，而我的输入只有32x32x3，因此如果用11x11的卷积核会显得过大。我将第一步修改为7x7和5x5的卷积核分别试验，得到下列结果：
-
+```
 7x7
 Epoch 20/20
 782/782 [==============================] - 31s 39ms/step - loss: 0.5466 - accuracy: 0.8084 - val_loss: 0.6711 - val_accuracy: 0.7777
@@ -67,15 +69,15 @@ Epoch 20/20
 5x5
 Epoch 20/20
 782/782 [==============================] - 28s 35ms/step - loss: 0.5036 - accuracy: 0.8234 - val_loss: 0.6227 - val_accuracy: 0.7931
-
+```
 7x7相比于11x11结果类似，但5x5的改进则很大，虽然仍有过拟合的嫌疑，但准确率数值好于11x11和7x7。
 
 
 另外，keras.optimizers.SGD默认的学习率是0.01，loss没有出现明显的大幅震荡，但下降也很慢。尝试向下降低学习率则现象加剧；向上增大学习率，改为lr=0.03，大学习率在前期进展很快，几乎每个epoch都提升5%，但是后期则使得整体陷入震荡状态，反而不利于准确率的提升，在20epoch结束后训练结果为:
-
+```
 Epoch 20/20
 782/782 [==============================] - 27s 35ms/step - loss: 0.4786 - accuracy: 0.8322 - val_loss: 0.6830 - val_accuracy: 0.7769
-
+```
 数字稍有提升，但感觉也有点过拟合的样子。所以实际上可以试试较大的学习率，搭配上合适的衰减速度，可能会在某些程度上提高准确率。
 
 
@@ -85,32 +87,32 @@ CIFAR-100是一个包含 50,000 张 32x32 彩色训练图像和 10,000 张测试
 
 这里我用细粒度类来测试。测试的网络即上一次测试的，lr=0.03，衰减=0.0005，sgd，网络后三层有0.5的dropout。
 
-
+```
 Epoch 20/20
 782/782 [==============================] - 27s 35ms/step - loss: 1.6637 - accuracy: 0.5390 - val_loss: 2.1325 - val_accuracy: 0.4608
-
+```
 不过应该是训练轮次的问题，在到达这个epoch之后依然没有收敛的态势，当训练次数增长时，准确率应当也会随之增长。
 
 
 使用tf.layers改写AlexNet并增加训练次数
 ==========
 （2021.7.11）总结一下之前的经验，与keras的Conv2D对应的layer为：
- tf.compat.v1.layers.conv2d() 
+ `tf.compat.v1.layers.conv2d() `
 
 与MaxPooling2D对应的则只有底层api，即tf.nn系列的：
- tf.nn.max_pool() 
+ `tf.nn.max_pool() `
 
 与Flatten对应的当然就是reshape操作：
- tf.reshape()
+`tf.reshape()`
 
 与Dropout对应的是也是底层的api，tf.nn系列的：
- tf.nn.dropout()
+` tf.nn.dropout()`
  
 与Dense对应的全连接层操作是tf.layers.dense：
- tf.layers.dense()
+` tf.layers.dense()`
 
 有了上述经验，加上keras打出来的层级结构，则很容易得到对应的tf.layer的表示。
-
+```
 Model: "sequential"
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
@@ -130,14 +132,16 @@ dense_1 (Dense)              (None, 4096)              16781312
 dropout_1 (Dropout)          (None, 4096)              0         
 dense_2 (Dense)              (None, 100)               409700    
 =================================================================
-
+```
 
 前面的数据读取我就还保留keras自己的了。实现过程中出现了下列问题：
+```
 4logits and labels must be broadcastable: logits_size=[50,100] labels_size=[200,100]
 	 [[node softmax_cross_entropy_with_logits_sg (defined at machine_\main.py:90) ]]
+```
 
 经查原来用的是valid padding，我给写成了same，这样从第二个池化层开始大小就不对了，最终计算下来导致形状错误。修正后，代码可以正常运行：
-
+```
 conv1, (?, 32, 32, 96)
 pool1, (?, 15, 15, 96)
 conv2, (?, 8, 8, 256)
@@ -151,7 +155,7 @@ fc1, (?, 4096)
 fc2, (?, 4096)
 fc3, (?, 100)
 yconv, (?, 100)
-
+```
 
 为加快训练速度，设置dropout=0.15，使用Adam（衰减0.999）。但使用类似轮数的训练只能得到约20%的准确率，相比上一个45%的准确率只有一半，这里还需要后面再仔细进行研究。
 
