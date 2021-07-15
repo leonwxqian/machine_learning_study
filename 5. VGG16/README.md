@@ -337,19 +337,20 @@ Epoch 4/100
 使用tf.nn实现
 ==================
 （2021.7.14）因为之前已经大致提取出很多种与tf.layers等价的tf.nn的实现，包括卷积层、最大池化层、全连接层。因此这次只需要用tf.nn实现剩余几个新增的层，例如：批量归一化层，以及层级中用到的l2正则化等功能。
-
+```
+（每781个step为一个epoch）
 step 781, acc: 0.05
 step 1562, acc: 0.04
 step 2343, acc: 0.03
 step 3124, acc: 0.04
 
-
-但遇到和上面一样的问题即准确率只有10%左右，这和keras的相去甚远。 
-
-调换l2和relu的顺序，
-tf.nn.l2_normalize(tf.nn.relu(logits), dim=0, epsilon=0.0005)
+```
+后一直震荡，准确率在5%～10%中间震荡，这明显是哪里写错了，查阅文档后发现第一个问题，即l2和relu方向反了，应当先relu再l2，不然会丢失很多数据。调换l2和relu的顺序，
+`tf.nn.l2_normalize(tf.nn.relu(logits), dim=0, epsilon=0.0005)`后验证成功率提升比较显著。然后，发现使用较大学习率的SGD效果也比较明显。
 设置
-train_step = tf.compat.v1.train.MomentumOptimizer(0.01, 0.9).minimize(cross_entropy) 后好很多，但上涨速度仍不如keras的快。在制作VGG19时，我会先将这里面用到的层给抽出来，然后从keras转为layer或nn的实现便会变得很简单，因此也可以对比keras实现，确定问题是出在哪里。
+`train_step = tf.compat.v1.train.MomentumOptimizer(0.01, 0.9).minimize(cross_entropy)` 后好很多，但上涨速度仍不如keras的快。虽然比较稳定地在增加，但速度似乎只有keras版本的1/4左右。
+
+这里的问题需要仔细排查。下一个任务是编写VGG19的代码，为了方便后面移植tf.layer和tf.nn，我会把这次实验中所有封装的层级单独做成package，这样从keras转为layer或nn的实现便会变得很简单，也会空出更多时间做其他的东西。这样我就可以集中精力对比keras实现，确定问题是出在哪里。
 
 ```
 学习率0.01， 动量0.9
