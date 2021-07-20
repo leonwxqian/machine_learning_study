@@ -9,3 +9,5 @@
 2021.7.12 cifar-100 alexnet (3种实现) + cifar-10 on alexnet 实验结果
 
 2021.7.15 cifar-100 vgg16
+
+2021.7.20 cifar-100 vgg19, 模块化
