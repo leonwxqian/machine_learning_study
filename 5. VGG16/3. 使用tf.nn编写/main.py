@@ -155,15 +155,15 @@ h_flatten = flatten(h_dropout12, 512)
 
 h_dense1 = dense(h_flatten, 512, kernel_regularizer='l2')
 h_norm_d1 = batch_normalization(h_dense1)
-h_dropout_d1 = dropout(h_norm_d1, 0.5)
+#h_dropout_d1 = dropout(h_norm_d1, 0.5)
 
 # h_dense2 = dense(h_dropout_d1, 100, kernel_regularizer='none', activation='softmax')
-h_dense2 = tf.layers.dense(inputs=h_dropout_d1, units=100)
+h_dense2 = tf.layers.dense(inputs=h_norm_d1, units=100)
 print(np.shape(h_dense2))
-logits = tf.nn.softmax(h_dense2)
+#logits = tf.nn.softmax(h_dense2)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=h_dense2))
-train_step = tf.compat.v1.train.MomentumOptimizer(0.03, 0.9).minimize(cross_entropy)
+train_step = tf.compat.v1.train.AdamOptimizer().minimize(cross_entropy)
 
 x_train = x_train.astype("float32")
 x_test = x_test.astype("float32")
@@ -173,25 +173,35 @@ x_test /= 255.0
 sess = tf.InteractiveSession()
 tf.global_variables_initializer().run()
 
-correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y_, 1))
+correct_prediction = tf.equal(tf.argmax(h_dense2, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 x_train = x_train.reshape(x_train.shape[0], IMAGE_SIZE)
 x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE)
 
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 TRAINING_DATASET_COUNT = 50000
 # train 100 rounds on every dataset in training set.
-EPOCHES = (TRAINING_DATASET_COUNT // BATCH_SIZE) * 100
+EPOCHES = 100
+BATCHES = (TRAINING_DATASET_COUNT // BATCH_SIZE) * EPOCHES
+
 
 (x_small_test_batch, y_small_test_batch) = get_batch(x_test, y_test, 1000, 1, 10000)
-for i in range(EPOCHES):
-    (x_batch, y_batch) = get_batch(x_train, y_train, BATCH_SIZE, i, 50000)
-    if i > 0 and i % (TRAINING_DATASET_COUNT // BATCH_SIZE) == 0:
-        train_accuracy = accuracy.eval(feed_dict={x: x_small_test_batch, y_: y_small_test_batch})
-        print("step %d, acc: %g" % (i, train_accuracy))
-    # print(np.shape(y_batch))
-    train_step.run(feed_dict={x: x_batch, y_: y_batch})
+
+with tf.Session() as tfsess:
+    tf.global_variables_initializer().run()
+    for i in range(BATCHES):
+        (x_batch, y_batch) = get_batch(x_train, y_train, BATCH_SIZE, i, 50000)
+        _, loss_value = tfsess.run([train_step, cross_entropy], feed_dict={x: x_batch, y_: y_batch})
+        #report loss every 10 batches
+        if i % 10 == 0:
+            print("batch %d, loss: %g" % (i, loss_value))
+
+        #test after a whole epoch
+        if i > 0 and i % (TRAINING_DATASET_COUNT // BATCH_SIZE) == 0:
+            train_accuracy = accuracy.eval(feed_dict={x: x_small_test_batch, y_: y_small_test_batch})
+            print("batch %d, loss: %g, acc: %g" % (i, loss_value, train_accuracy))
+
 
 train_accuracy = accuracy.eval(feed_dict={x: x_train, y_: y_test})
 print("step final, acc: %g" % train_accuracy)
