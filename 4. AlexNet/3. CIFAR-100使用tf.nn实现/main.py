@@ -115,10 +115,10 @@ print("fc2,", np.shape(h_fc2))
 # 0.50 dropout
 h_fc2_drop = tf.nn.dropout(h_fc2, rate=1 - 0.15)
 # softmax: 1000
-logits = dense(h_fc2_drop, 4096, 100, 0.0001, activation="softmax", no_bias=True)
+logits = dense(h_fc2_drop, 4096, 100, 0.0001, activation="none", no_bias=True)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=logits))
-train_step = tf.train.AdamOptimizer(0.00009).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer().minimize(cross_entropy)
 
 x_train = x_train.astype("float32")
 x_test = x_test.astype("float32")
@@ -126,7 +126,7 @@ x_train /= 255.0
 x_test /= 255.0
 
 sess = tf.InteractiveSession()
-tf.global_variables_initializer().run()
+#tf.global_variables_initializer().run()
 
 correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -139,15 +139,24 @@ x_test = x_test.reshape(x_test.shape[0], IMAGE_SIZE)
 BATCH_SIZE = 200
 TRAINING_DATASET_COUNT = 50000
 # train 100 rounds on every dataset in training set.
-EPOCHES = (TRAINING_DATASET_COUNT // BATCH_SIZE) * 100
+EPOCHES = 100
+BATCHES = (TRAINING_DATASET_COUNT // BATCH_SIZE) * EPOCHES
 
-for i in range(EPOCHES):
-    (x_batch, y_batch) = get_batch(x_train, y_train, BATCH_SIZE, i, 50000)
-    #print(np.shape(x_batch), np.shape(y_batch))
-    if i > 0 and i % 10 == 0:
-        train_accuracy = accuracy.eval(feed_dict={x: x_small_test_batch, y_: y_small_test_batch})
-        print("step %d, acc: %g" % (i, train_accuracy))
-    train_step.run(feed_dict={x: x_batch, y_: y_batch})
+with tf.Session() as tfsess:
+    tf.global_variables_initializer().run()
+    for i in range(BATCHES):
+        (x_batch, y_batch) = get_batch(x_train, y_train, BATCH_SIZE, i, 50000)
+        _, loss_value = tfsess.run([train_step, cross_entropy], feed_dict={x: x_batch, y_: y_batch})
+        #report loss every 10 batches
+        if i % 10 == 0:
+            print("batch %d, loss: %g" % (i, loss_value))
+
+        #test after a whole epoch
+        if i > 0 and i % (TRAINING_DATASET_COUNT // BATCH_SIZE) == 0:
+            train_accuracy = accuracy.eval(feed_dict={x: x_small_test_batch, y_: y_small_test_batch})
+            print("batch %d, loss: %g, acc: %g" % (i, loss_value, train_accuracy))
+
 
 train_accuracy = accuracy.eval(feed_dict={x: x_train, y_: y_test})
 print("step final, acc: %g" % train_accuracy)
+
