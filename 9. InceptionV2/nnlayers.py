@@ -18,49 +18,22 @@ def get_batch(image, label, batch_size, now_batch, total_batch):
         label_batch = label[now_batch * batch_size:]
     return image_batch, label_batch
 
-def conv2d_bn(input, filter_count, kernel_row, kernel_col, padding='SAME', strides=1, kernel_regularizer='none', l2_value=0.0005, activation='none'):
-    conv = complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides, padding,kernel_regularizer, l2_value, activation='none')
-    bn = batch_normalization(conv)
-    return tf.nn.relu(bn)
 
-def complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides=1, padding='SAME',kernel_regularizer='none', l2_value=0.0005, activation='relu'):
-    if kernel_regularizer == 'none':
-        kern = None
-    elif kernel_regularizer == 'l2':
-        kern = tf.compat.v1.keras.initializers.glorot_normal()
 
+def conv_2d(input, kernel_size, filter_count, strides=1, padding='SAME',kernel_regularizer='none', l2_value=0.0005):
     if kernel_regularizer == 'none':
-        activfn = None
-    elif kernel_regularizer == 'relu':
-        activfn = tf.nn.relu
- 
- 
-    return tf.compat.v1.layers.conv2d(input, filters=filter_count, kernel_size=[kernel_row, kernel_col],
+        return tf.compat.v1.layers.conv2d(input, filters=filter_count, kernel_size=[kernel_size, kernel_size],
                                           use_bias=True,
-                                          kernel_initializer=kern,
+                                          kernel_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                                           strides=[strides, strides],
-                                          bias_initializer=tf.constant_initializer(0.0), activation=activfn,
-                                          padding=padding.upper(),
-                                          kernel_regularizer=tf.keras.regularizers.L2(l2_value))
-
-
-def conv_2d(input, kernel_size, filter_count, strides=1, padding='SAME',kernel_regularizer='none', l2_value=0.0005, activation='relu'):
-    if kernel_regularizer == 'none':
-        kern = None
+                                          bias_initializer=tf.constant_initializer(0.0), activation=tf.nn.relu,
+                                          padding=padding.upper())
     elif kernel_regularizer == 'l2':
-        kern = tf.compat.v1.keras.initializers.glorot_normal()
-
-    if kernel_regularizer == 'none':
-        activfn = None
-    elif kernel_regularizer == 'relu':
-        activfn = tf.nn.relu
- 
- 
-    return tf.compat.v1.layers.conv2d(input, filters=filter_count, kernel_size=[kernel_size, kernel_size],
+        return tf.compat.v1.layers.conv2d(input, filters=filter_count, kernel_size=[kernel_size, kernel_size],
                                           use_bias=True,
-                                          kernel_initializer=kern,
+                                          kernel_initializer=tf.compat.v1.keras.initializers.glorot_normal(),
                                           strides=[strides, strides],
-                                          bias_initializer=tf.constant_initializer(0.0), activation=activfn,
+                                          bias_initializer=tf.constant_initializer(0.0), activation=tf.nn.relu,
                                           padding=padding.upper(),
                                           kernel_regularizer=tf.keras.regularizers.L2(l2_value))
 
