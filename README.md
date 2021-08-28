@@ -13,3 +13,11 @@
 2021.7.20 cifar-100 vgg19, 模块化
 
 2021.7.28 修复代码中存在的所有问题
+
+2021.8.10 cifar-100 GoogleNet
+
+2021.8.15 cifar-100 Inception v2
+
+2021.8.21 cifar-100 Inception v3
+
+2021.8.28 cifar-100 ResNet100， 修正自己封装的库问题
