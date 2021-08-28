@@ -20,4 +20,4 @@
 
 2021.8.21 cifar-100 Inception v3
 
-2021.8.28 cifar-100 ResNet100， 修正自己封装的库问题
+2021.8.28 cifar-100 ResNet50， 修正自己封装的库问题
