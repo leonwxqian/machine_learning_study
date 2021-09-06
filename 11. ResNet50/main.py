@@ -48,9 +48,9 @@ x_image = tf.reshape(x, [-1, IMAGE_WIDTH, IMAGE_WIDTH, 3])
 def identity_block(input_tensor, kernel_size, filters, stage, block):
     filters1, filters2, filters3 = filters
     bn_axis = 3
-    x = nnlayers.conv2d_bn(input_tensor, filters1, 1, 1, kernel_initializer='he_normal', activation='relu', padding='valid') #is padding correct??
-    x = nnlayers.conv2d_bn(x, filters2, 1, 1, kernel_initializer='he_normal', activation='relu', padding='same')
-    x = nnlayers.conv2d_bn(x, filters3, 1, 1, kernel_initializer='he_normal', activation='relu', padding='valid')
+    x = nnlayers.conv2d_bn(input_tensor, filters1, 1, 1, kernel_initializer='he_normal', activation='none', padding='valid') #is padding correct??
+    x = nnlayers.conv2d_bn(x, filters2, 1, 1, kernel_initializer='he_normal', activation='none', padding='same')
+    x = nnlayers.conv2d_bn(x, filters3, 1, 1, kernel_initializer='he_normal', activation='none', padding='valid')
     #x = x + input_tensor
     x = tf.keras.layers.add([x, input_tensor])
     x = tf.nn.relu(x)
@@ -60,8 +60,8 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
 def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2)):
     filters1, filters2, filters3 = filters
     bn_axis = 3 
-    x = nnlayers.conv2d_bn(input_tensor, filters1, 1, 1, strides=strides[0], kernel_initializer='he_normal', activation='relu', padding='valid') #is padding correct??
-    x = nnlayers.conv2d_bn(x, filters2, 1, 1, kernel_initializer='he_normal', activation='relu', padding='same')
+    x = nnlayers.conv2d_bn(input_tensor, filters1, 1, 1, strides=strides[0], kernel_initializer='he_normal', activation='none', padding='valid') #is padding correct??
+    x = nnlayers.conv2d_bn(x, filters2, 1, 1, kernel_initializer='he_normal', activation='none', padding='same')
     x = nnlayers.conv2d_bn(x, filters3, 1, 1, kernel_initializer='he_normal', kernel_regularizer='none', padding='valid')
     shortcut = nnlayers.conv2d_bn(input_tensor, filters3, 1, 1, strides=strides[0], kernel_initializer='he_normal', kernel_regularizer='none', padding='valid')
     x = tf.keras.layers.add([x, shortcut])
@@ -82,21 +82,28 @@ def build_model(include_top=True,
 
     x = nnlayers.zero_padding(x_image, padding=(3, 3), )
     
-    x = nnlayers.conv2d_bn(x, 64, 7, 7, strides=2, kernel_initializer='he_normal', activation='relu', padding='valid') #is padding correct??
+    x = nnlayers.conv2d_bn(x, 64, 7, 7, strides=2, kernel_initializer='he_normal', activation='none', padding='valid') #is padding correct??
  
     x = nnlayers.zero_padding(x, padding=(1, 1))
     
     x = nnlayers.max_pooling(x, 3, strides=2, padding='valid') 
-    
+    resnet_18 = [2,2,2,2]  #basic_block
+    resnet_34 = [3,4,6,3]
+    resnet_50 = [3,4,6,3]  #bottleneck
+    resnet_101 = [3,4,23,3]
+    resnet_152 = [3,8,36,3]
+    # 3
     x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1))
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
 
+    # 4
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
 
+    # 6
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c')
@@ -104,13 +111,14 @@ def build_model(include_top=True,
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
 
+    # 3
     x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
 
     # Per:https://stackoverflow.com/questions/42054451/how-do-i-do-global-average-pooling-in-tensorflow
     x = tf.reduce_mean(x, axis=[1,2])
-    x = nnlayers.dense(x, 100, kernel_regularizer='none', activation='relu') #no softmax here!
+    x = nnlayers.dense(x, 100, kernel_regularizer='none', activation='none') #no softmax here!
     return x
 
 k = build_model()

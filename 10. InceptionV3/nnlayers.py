@@ -18,41 +18,63 @@ def get_batch(image, label, batch_size, now_batch, total_batch):
         label_batch = label[now_batch * batch_size:]
     return image_batch, label_batch
 
-def conv2d_bn(input, filter_count, kernel_row, kernel_col, padding='SAME', strides=1, kernel_regularizer='none', l2_value=0.0005, activation='none'):
-    conv = complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides, padding,kernel_regularizer, l2_value, activation='none')
-    bn = batch_normalization(conv)
+
+def zero_padding(input, padding=3, data_format=None):
+    return tf.keras.layers.ZeroPadding2D(padding=(padding, padding), data_format=None)(input)
+
+
+def conv2d_bn(input, filter_count, kernel_row, kernel_col, padding='SAME', strides=1, kernel_regularizer='none', l2_value=0.0005, activation='none', kernel_initializer='glorot_normal', axis=3):
+    conv = complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides=strides, padding=padding,kernel_regularizer=kernel_regularizer, l2_value=l2_value, activation=activation, kernel_initializer=kernel_initializer)
+    bn = batch_normalization(conv, axis)
     return tf.nn.relu(bn)
 
-def complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides=1, padding='SAME',kernel_regularizer='none', l2_value=0.0005, activation='relu'):
-    if kernel_regularizer == 'none':
+def complex_conv_2d(input, filter_count, kernel_row, kernel_col, strides=1, padding='SAME',kernel_initializer='glorot_normal', kernel_regularizer='none', l2_value=0.0005, activation='relu'):
+    kern = None
+    if kernel_initializer == 'none':
         kern = None
-    elif kernel_regularizer == 'l2':
+    elif kernel_initializer == 'glorot_normal':
         kern = tf.compat.v1.keras.initializers.glorot_normal()
+    elif kernel_initializer == 'he_normal':
+        kern = tf.compat.v1.keras.initializers.he_normal()
 
+    kr = None
     if kernel_regularizer == 'none':
+        kr = None
+    elif kernel_regularizer == 'l2':
+        kr = tf.keras.regularizers.L2(l2_value)
+
+    activfn = None
+    if activation == 'none':
         activfn = None
-    elif kernel_regularizer == 'relu':
+    elif activation == 'relu':
         activfn = tf.nn.relu
  
- 
+    #print(filter_count, kernel_row, kernel_col, kern, strides, activfn, padding, kr)
     return tf.compat.v1.layers.conv2d(input, filters=filter_count, kernel_size=[kernel_row, kernel_col],
                                           use_bias=True,
                                           kernel_initializer=kern,
                                           strides=[strides, strides],
                                           bias_initializer=tf.constant_initializer(0.0), activation=activfn,
                                           padding=padding.upper(),
-                                          kernel_regularizer=tf.keras.regularizers.L2(l2_value))
+                                          kernel_regularizer=kr)
 
 
-def conv_2d(input, kernel_size, filter_count, strides=1, padding='SAME',kernel_regularizer='none', l2_value=0.0005, activation='relu'):
-    if kernel_regularizer == 'none':
+def conv_2d(input, kernel_size, filter_count, strides=1, padding='SAME',kernel_initializer = 'glorot_normal', kernel_regularizer='none', l2_value=0.0005, activation='relu'):
+    if kernel_initializer == 'none':
         kern = None
-    elif kernel_regularizer == 'l2':
+    elif kernel_initializer == 'glorot_normal':
         kern = tf.compat.v1.keras.initializers.glorot_normal()
-
+    elif kernel_initializer == 'he_normal':
+        kern = tf.compat.v1.keras.initializers.he_normal()
+    
     if kernel_regularizer == 'none':
+        kr = None
+    elif kernel_regularizer == 'l2':
+        kr = tf.keras.regularizers.L2(l2_value)
+        
+    if activation == 'none':
         activfn = None
-    elif kernel_regularizer == 'relu':
+    elif activation == 'relu':
         activfn = tf.nn.relu
  
  
@@ -62,7 +84,7 @@ def conv_2d(input, kernel_size, filter_count, strides=1, padding='SAME',kernel_r
                                           strides=[strides, strides],
                                           bias_initializer=tf.constant_initializer(0.0), activation=activfn,
                                           padding=padding.upper(),
-                                          kernel_regularizer=tf.keras.regularizers.L2(l2_value))
+                                          kernel_regularizer=kr)
 
 										  
 def conv_2dnn(input, kernel_size, filter_count, strides=1, padding='SAME', kernel_regularizer='none'):
@@ -124,8 +146,8 @@ def dense(input, units, stddev=0.04, bias=0.0, kernel_regularizer='none', activa
         return tf.nn.softmax(logits)
 
 
-def batch_normalization(inputs):
-    mean, variance = tf.nn.moments(inputs, axes=0)
+def batch_normalization(inputs, axes=0):
+    mean, variance = tf.nn.moments(inputs, axes=list(range(len(inputs.get_shape())-1)))
     return tf.nn.batch_normalization(
         inputs, mean, variance, None, None, 1e-12, name=None  # try 0.001 also
     )
